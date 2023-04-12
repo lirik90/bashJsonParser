@@ -11,11 +11,12 @@ This is a pure Bash implementation with no dependencies.
 
 ##### Please, try it:
 ```bash
-curl -o - https://raw.githubusercontent.com/lirik90/bashJsonParser/master/main.sh | bash
+git clone https://github.com/lirik90/bashJsonParser.git
+bash bashJsonParser/example.sh
 ```
 
 ### For integrate to your project:
-1. Copy code from [main.sh](main.sh) file
+1. Copy code from [jsonParser.sh](jsonParser.sh) file
 2. Get JSON from something place
 ```bash
 read -d '' JSON << EOF
@@ -36,5 +37,3 @@ JSON=$(minifyJson "$JSON")
 company=$(parseJson "$JSON" 0 company name)
 echo "Company is: $company"
 ```
-
-
