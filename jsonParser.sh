@@ -37,18 +37,19 @@ function minifyJson() {
 
 # 'Open'-'Close' braces calculator
 function calcBraces() {
-	local -i sum=$1 escaped=0 quoted=0 i
+	local -i sum=$1 startSum=$1 escaped=0 quoted=0 i
 	local s="$2" c=""
 
 	for ((i=0; i<${#s}; ++i)); do
 		processJson
+		[ $? -ne 0 ] && break
 	done
 	echo $sum
 }
 
 # Calc length one object from 'open' to 'close' braces
 function jsonObjectLength() {
-	local -i sum=1 escaped=0 quoted=0 i
+	local -i sum=1 startSum=0 escaped=0 quoted=0 i
 	local s="$1" c=""
 
 	# Check first char is open braces
@@ -58,6 +59,7 @@ function jsonObjectLength() {
 			return
 		fi
 		processJson
+		[ $? -ne 0 ] && break
 	done
 	echo 0
 }
@@ -66,7 +68,7 @@ function jsonObjectLength() {
 function processJson() {
 	if [ $escaped -eq 1 ]; then
 		escaped=0
-		return
+		return 0
 	fi
 
 	c="${s:i:1}"
@@ -76,12 +78,14 @@ function processJson() {
 		[ $quoted -eq 1 ] && quoted=0 || quoted=1
 	fi
 
-	[ $quoted -eq 1 ] && return
+	[ $quoted -eq 1 ] && return 0
 	if [ "$c" = "{" ]; then
 		sum=$((sum+1))
 	elif [ "$c" = "}" ]; then
 		sum=$((sum-1))
+		[ $sum -lt $startSum ] && return 1
 	fi
+	return 0
 }
 
 function parseJsonImpl() {
