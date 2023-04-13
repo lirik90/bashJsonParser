@@ -93,21 +93,21 @@ function parseJsonImpl() {
 	while [ 1 ]; do
 		if [[ ${obj[0]} =~ ^[0-9]+$ ]]; then
 			# Check is array under position
-			[ "${JSON:0:1}" = "[" ] || return
+			[ "${JSON:0:1}" = "[" ] || return 1
 			JSON="${JSON:1}"
 
 			for ((i=0; i<${obj[0]}; ++i)); do
 				newPos=$(jsonObjectLength "${JSON}")
-				[ $newPos -eq 0 ] && return
+				[ $newPos -eq 0 ] && return 1
 				JSON="${JSON:$newPos}"
 
 				# Check is next object available
-				[ "${JSON:0:1}" = "," ] || return
+				[ "${JSON:0:1}" = "," ] || return 1
 				JSON="${JSON:1}"
 			done
 
 			# Check is next object under position
-			[ "${JSON:0:1}" = "{" ] || return
+			[ "${JSON:0:1}" = "{" ] || return 1
 			JSON="${JSON:1}"
 			br=$((br+1))
 			depth=$((depth-1))
@@ -116,7 +116,7 @@ function parseJsonImpl() {
 		fi
 
 		m="${JSON%%"\"${obj[0]}\":"*}"
-		[[ "$m" = "$JSON" ]] && return
+		[[ "$m" = "$JSON" ]] && return 1
 		newPos=$((${#m}+${#obj[0]}+3))
 		JSON="${JSON:${newPos}}"
 		[ -z "$m" ] && break
@@ -128,10 +128,22 @@ function parseJsonImpl() {
 	if [ ${#obj[@]} -gt 1 ]; then
 		unset 'obj[0]'
 		parseJsonImpl $((depth+1)) $br "${JSON}" "${obj[@]}"
+		return $?
 	elif [[ $JSON =~ ^\"(([^\"]|\\\")*)\" ]]; then
 		echo "${BASH_REMATCH[1]}"
-	elif [[ $JSON =~ ^(-?[0-9]*) ]]; then
+	elif [[ $JSON =~ ^(-?[0-9]+) ]]; then
 		echo "${BASH_REMATCH[1]}"
+	elif [[ $JSON =~ ^(true|false|null) ]]; then
+		echo "${BASH_REMATCH[1]}"
+	elif [[ $JSON =~ ^\[ ]]; then
+		>&2 echo "[jsonParser] Sorry, array parsing is not implemented yet."
+		return 1
+	elif [[ $JSON =~ ^\{ ]]; then
+		>&2 echo "[jsonParser] Sorry, object parsing is not implemented yet."
+		return 1
+	else
+		return 1
 	fi
+	return 0
 }
 
