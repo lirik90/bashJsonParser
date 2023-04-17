@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# This file is taken from https://github.com/lirik90/bashJsonParser
 
 # Public JSON parser function
 function parseJson() {
@@ -89,21 +91,21 @@ function processJson() {
 }
 
 function parseJsonImpl() {
-	local -i depth=$1 br=$2 newPos=0 i
+	local -i depth=$1 br=$2 pos=0 i
 	local JSON="$3" m=""
 	shift; shift; shift
 	local obj=("$@")
 
-	while [ 1 ]; do
+	while true; do
 		if [[ ${obj[0]} =~ ^[0-9]+$ ]]; then
 			# Check is array under position
 			[ "${JSON:0:1}" = "[" ] || return 1
 			JSON="${JSON:1}"
 
 			for ((i=0; i<${obj[0]}; ++i)); do
-				newPos=$(jsonObjectLength "${JSON}")
-				[ $newPos -eq 0 ] && return 1
-				JSON="${JSON:$newPos}"
+				m=$(printCurrentJsonValue "${JSON}" --keepQuotes)
+				[ $? -ne 0 ] && return 1
+				JSON="${JSON:${#m}}"
 
 				# Check is next object available
 				[ "${JSON:0:1}" = "," ] || return 1
@@ -111,18 +113,19 @@ function parseJsonImpl() {
 			done
 
 			# Check is next object under position
-			[ "${JSON:0:1}" = "{" ] || return 1
-			JSON="${JSON:1}"
-			br=$((br+1))
-			depth=$((depth-1))
+			if [ "${JSON:0:1}" = "{" ]; then
+				JSON="${JSON:1}"
+				br=$((br+1))
+				depth=$((depth-1))
+			fi
 
 			break
 		fi
 
 		m="${JSON%%"\"${obj[0]}\":"*}"
 		[[ "$m" = "$JSON" ]] && return 1
-		newPos=$((${#m}+${#obj[0]}+3))
-		JSON="${JSON:${newPos}}"
+		pos=$((${#m}+${#obj[0]}+3))
+		JSON="${JSON:$pos}"
 		[ -z "$m" ] && break
 
 		br=$(calcBraces $br "$m")
@@ -132,19 +135,40 @@ function parseJsonImpl() {
 	if [ ${#obj[@]} -gt 1 ]; then
 		unset 'obj[0]'
 		parseJsonImpl $((depth+1)) $br "${JSON}" "${obj[@]}"
-		return $?
-	elif [[ $JSON =~ ^\"(([^\"]|\\\")*)\" ]]; then
-		echo "${BASH_REMATCH[1]}"
+	else
+		printCurrentJsonValue "$JSON"
+	fi
+	return $?
+}
+
+function printCurrentJsonValue() {
+	local JSON="$1"
+	if [[ $JSON =~ ^\"(([^\"]|\\\")*)\" ]]; then
+		local quote=""
+		[ "$2" = "--keepQuotes" ] && quote="\""
+		echo "${quote}${BASH_REMATCH[1]}${quote}"
 	elif [[ $JSON =~ ^(-?[0-9]+) ]]; then
 		echo "${BASH_REMATCH[1]}"
 	elif [[ $JSON =~ ^(true|false|null) ]]; then
 		echo "${BASH_REMATCH[1]}"
 	elif [[ $JSON =~ ^\[ ]]; then
-		>&2 echo "[jsonParser] Sorry, array parsing is not implemented yet."
-		return 1
+		local res="[" item
+		local -i pos=1
+		while true; do
+			res+=$(printCurrentJsonValue "${JSON:$pos}" --keepQuotes)
+			[ $? -ne 0 ] && break
+			pos=${#res}
+			if [ "${JSON:$pos:1}" = "," ]; then
+				res+=","
+				pos=$((pos+1))
+			fi
+		done
+		echo "${res}]"
 	elif [[ $JSON =~ ^\{ ]]; then
-		>&2 echo "[jsonParser] Sorry, object parsing is not implemented yet."
-		return 1
+		local -i len
+		len=$(jsonObjectLength "$JSON")
+		[ $len -eq 0 ] && return 1
+		echo "${JSON:0:$len}"
 	else
 		return 1
 	fi

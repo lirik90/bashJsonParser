@@ -2,10 +2,8 @@
 That code work at least on Bash 3.2.57 and above.  
 This is a pure Bash implementation with no dependencies.  
 
-### ATTENTION: Below is a list of unimplemented things:
-1. Getting value from numeric or string array, now only from object array.
-2. Getting whole array or object.
-3. Maybe much more another important things. If anyone need anything from it, please [contact to me](mailto:qc424j85o@relay.firefox.com), and i will try to do it.
+### ATTENTION:
+Maybe there are some unimplemented important things. If anyone need anything from it, please [contact to me](mailto:qc424j85o@relay.firefox.com), and i will try to do it.
 
 ##### ATTENTION: It's works slowly with big JSON documents.
 
