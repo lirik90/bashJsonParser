@@ -13,6 +13,14 @@ git clone https://github.com/lirik90/bashJsonParser.git
 bash bashJsonParser/example.sh
 ```
 
+##### Or something like that:
+```bash
+source <(curl -s -L -o- https://github.com/lirik90/bashJsonParser/raw/master/jsonParser.sh)
+JSON='{"error": "Error message text"}'
+JSON=$(minifyJson "$JSON")
+echo "Message is: $(parseJson "$JSON" error)"
+```
+
 ### For integrate to your project:
 1. Copy code from [jsonParser.sh](jsonParser.sh) file
 2. Get JSON from something place
