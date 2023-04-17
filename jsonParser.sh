@@ -141,6 +141,7 @@ function parseJsonImpl() {
 	return $?
 }
 
+# Print JSON value from beginning of arg
 function printCurrentJsonValue() {
 	local JSON="$1"
 	if [[ $JSON =~ ^\"(([^\"]|\\\")*)\" ]]; then
